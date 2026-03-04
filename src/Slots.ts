@@ -59,7 +59,7 @@ export const loadSlot = (app: Application) => {
 
   btn.interactive = true;
   btn.on("pointerdown", async () => {
-    // take cost 
+    // take cost
     updateBalance(-cost);
 
     // change btn state
@@ -77,16 +77,16 @@ export const loadSlot = (app: Application) => {
       reel1.getCurrentSymbol() == reel2.getCurrentSymbol() &&
       reel2.getCurrentSymbol() == reel3.getCurrentSymbol()
     ) {
-      updateBalance(cost * 8);
+      updateBalance(cost*8);
     } else if (
-        // if two are qual ina row reward 2 x the cost
+      // if two are qual ina row reward 2 x the cost
       reel1.getCurrentSymbol() == reel2.getCurrentSymbol() ||
       reel2.getCurrentSymbol() == reel3.getCurrentSymbol()
     ) {
-        updateBalance(cost*2)
+      updateBalance(cost*2);
     }
-      // change button state back
-      btn.texture = Texture.from("btn_initial");
+    // change button state back
+    btn.texture = Texture.from("btn_initial");
     btn.interactive = true;
   });
 };

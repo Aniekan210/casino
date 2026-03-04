@@ -10,11 +10,7 @@ export const loadStartScene = (app: Application<Renderer>) => {
   container.width = app.screen.width;
   container.height = app.screen.height;
   container.origin.set(app.screen.width / 2, app.screen.height / 2);
-
   loadBalanceCont(app, container);
-
-
   loadSlot(app);
-
   app.stage.addChild(container);
 };

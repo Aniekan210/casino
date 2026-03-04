@@ -2,11 +2,21 @@ import { Container, Sprite, Texture, Ticker, Graphics } from "pixi.js";
 
 type SymbolType = "A" | "B" | "C" | "D" | "E";
 
+/** Dedicated sprite class for symbols */
+class SymbolSprite extends Sprite {
+  public symbolType: SymbolType;
+
+  constructor(symbol: SymbolType) {
+    super(Texture.from(symbol));
+    this.symbolType = symbol;
+  }
+}
+
 export class Reel extends Container {
   private symbols: SymbolType[] = ["A", "B", "C", "D", "E"];
 
   private viewport: Container = new Container(); // holds spinning symbols
-  private symbolSprites: Sprite[] = [];
+  private symbolSprites: SymbolSprite[] = [];
 
   private symbolHeight = 160;
   private symbolWidth = 110;
@@ -46,12 +56,11 @@ export class Reel extends Container {
     }
   }
 
-  /** Creates a sprite from preloaded alias */
-  private createSymbolSprite(symbol: SymbolType): Sprite {
-    const sprite = Sprite.from(symbol);
+  /** Creates a symbol sprite */
+  private createSymbolSprite(symbol: SymbolType): SymbolSprite {
+    const sprite = new SymbolSprite(symbol);
     sprite.width = this.symbolWidth;
     sprite.height = this.symbolHeight;
-    (sprite as any).symbolType = symbol;
     return sprite;
   }
 
@@ -82,7 +91,7 @@ export class Reel extends Container {
           sprite.y -= this.symbolHeight * this.totalStack;
           const newSymbol = this.getRandomSymbol();
           sprite.texture = Texture.from(newSymbol);
-          (sprite as any).symbolType = newSymbol;
+          sprite.symbolType = newSymbol;
         }
       }
 
@@ -97,7 +106,7 @@ export class Reel extends Container {
           );
 
           visibleSprite.texture = Texture.from(this.targetSymbol!);
-          (visibleSprite as any).symbolType = this.targetSymbol!;
+          visibleSprite.symbolType = this.targetSymbol!;
 
           this.snapToTarget(visibleSprite);
 
@@ -111,7 +120,7 @@ export class Reel extends Container {
   }
 
   /** Snap a sprite to be perfectly centered in the mask */
-  private snapToTarget(targetSprite: Sprite) {
+  private snapToTarget(targetSprite: SymbolSprite) {
     const visibleCenterY = this.symbolHeight / 2;
     const offset = visibleCenterY - (targetSprite.y + this.symbolHeight / 2);
 
@@ -130,6 +139,6 @@ export class Reel extends Container {
         s.y + this.symbolHeight >= visibleY,
     );
 
-    return current ? ((current as any).symbolType as SymbolType) : null;
+    return current ? current.symbolType : null;
   }
 }

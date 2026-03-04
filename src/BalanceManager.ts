@@ -16,7 +16,7 @@ export const loadBalanceCont = (
   balanceImage.anchor.set(0, 0);
   balanceImage.position.set(app.screen.width * 0.02, app.screen.height * 0.02);
 
-  let stored = localStorage.getItem(key);
+  const stored = localStorage.getItem(key);
   balance = stored !== null ? Number(stored) : 1000;
   localStorage.setItem(key, balance.toString());
 
