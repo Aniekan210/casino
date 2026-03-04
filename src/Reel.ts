@@ -1,4 +1,10 @@
-import { Container, Sprite, Texture, Ticker, Graphics } from "pixi.js";
+import {
+  Container,
+  Sprite,
+  Texture,
+  Ticker,
+  Graphics,
+} from "pixi.js";
 
 type SymbolType = "A" | "B" | "C" | "D" | "E";
 
@@ -14,10 +20,8 @@ class SymbolSprite extends Sprite {
 
 export class Reel extends Container {
   private symbols: SymbolType[] = ["A", "B", "C", "D", "E"];
-
-  private viewport: Container = new Container(); // holds spinning symbols
+  private viewport: Container = new Container();
   private symbolSprites: SymbolSprite[] = [];
-
   private symbolHeight = 160;
   private symbolWidth = 110;
   private totalStack = 10;
@@ -28,25 +32,20 @@ export class Reel extends Container {
 
   constructor() {
     super();
-
     this.setupMask();
     this.buildInitialStack();
   }
 
-  /** Creates mask so only ONE symbol is visible */
   private setupMask() {
     this.addChild(this.viewport);
-
     const maskShape = new Graphics()
       .beginFill(0xffffff)
       .drawRect(0, 0, this.symbolWidth, this.symbolHeight)
       .endFill();
-
     this.addChild(maskShape);
     this.viewport.mask = maskShape;
   }
 
-  /** Creates initial stacked symbols */
   private buildInitialStack() {
     for (let i = 0; i < this.totalStack; i++) {
       const sprite = this.createSymbolSprite(this.getRandomSymbol());
@@ -56,7 +55,6 @@ export class Reel extends Container {
     }
   }
 
-  /** Creates a symbol sprite */
   private createSymbolSprite(symbol: SymbolType): SymbolSprite {
     const sprite = new SymbolSprite(symbol);
     sprite.width = this.symbolWidth;
@@ -68,58 +66,54 @@ export class Reel extends Container {
     return this.symbols[Math.floor(Math.random() * this.symbols.length)];
   }
 
-  /** Spins the reel using Pixi's Ticker */
-  public spin(ticker: Ticker) {
-    if (this.isSpinning) return;
+  /** Spins the reel and returns a Promise that resolves when spin is done */
+  public spin(ticker: Ticker): Promise<void> {
+    return new Promise((resolve) => {
+      if (this.isSpinning) return resolve();
 
-    this.isSpinning = true;
-    this.targetSymbol = this.getRandomSymbol();
+      this.isSpinning = true;
+      this.targetSymbol = this.getRandomSymbol();
+      const spinDuration = 2000 + Math.random() * 1000;
+      const startTime = performance.now();
+      this.speed = 25 + Math.random() * 10;
 
-    const spinDuration = 2000 + Math.random() * 1000;
-    const startTime = performance.now();
-    this.speed = 25 + Math.random() * 10;
+      const update = () => {
+        const elapsed = performance.now() - startTime;
 
-    const update = () => {
-      const elapsed = performance.now() - startTime;
+        for (const sprite of this.symbolSprites) {
+          sprite.y += this.speed;
 
-      // move symbols downward
-      for (const sprite of this.symbolSprites) {
-        sprite.y += this.speed;
-
-        // loop symbol to top
-        if (sprite.y >= this.symbolHeight * this.totalStack) {
-          sprite.y -= this.symbolHeight * this.totalStack;
-          const newSymbol = this.getRandomSymbol();
-          sprite.texture = Texture.from(newSymbol);
-          sprite.symbolType = newSymbol;
+          if (sprite.y >= this.symbolHeight * this.totalStack) {
+            sprite.y -= this.symbolHeight * this.totalStack;
+            const newSymbol = this.getRandomSymbol();
+            sprite.texture = Texture.from(newSymbol);
+            sprite.symbolType = newSymbol;
+          }
         }
-      }
 
-      // after duration, slow down
-      if (elapsed >= spinDuration) {
-        this.speed *= 0.96;
+        if (elapsed >= spinDuration) {
+          this.speed *= 0.96;
 
-        if (this.speed < 1.5) {
-          // force a visible sprite to become target
-          const visibleSprite = this.symbolSprites.reduce((prev, curr) =>
-            curr.y > prev.y ? curr : prev,
-          );
+          if (this.speed < 1.5) {
+            const visibleSprite = this.symbolSprites.reduce((prev, curr) =>
+              curr.y > prev.y ? curr : prev,
+            );
 
-          visibleSprite.texture = Texture.from(this.targetSymbol!);
-          visibleSprite.symbolType = this.targetSymbol!;
+            visibleSprite.texture = Texture.from(this.targetSymbol!);
+            visibleSprite.symbolType = this.targetSymbol!;
+            this.snapToTarget(visibleSprite);
 
-          this.snapToTarget(visibleSprite);
-
-          ticker.remove(update);
-          this.isSpinning = false;
+            ticker.remove(update);
+            this.isSpinning = false;
+            resolve();
+          }
         }
-      }
-    };
+      };
 
-    ticker.add(update);
+      ticker.add(update);
+    });
   }
 
-  /** Snap a sprite to be perfectly centered in the mask */
   private snapToTarget(targetSprite: SymbolSprite) {
     const visibleCenterY = this.symbolHeight / 2;
     const offset = visibleCenterY - (targetSprite.y + this.symbolHeight / 2);
@@ -129,16 +123,20 @@ export class Reel extends Container {
     }
   }
 
-  /** Returns symbol currently visible */
-  public getCurrentSymbol(): SymbolType | null {
-    const visibleY = 0;
+  /** Returns the symbol currently visible */
+  public getCurrentSymbol(): SymbolType {
+    const centerY = this.symbolHeight / 2;
+    let closest = this.symbolSprites[0];
+    let minDist = Math.abs(closest.y + this.symbolHeight / 2 - centerY);
 
-    const current = this.symbolSprites.find(
-      (s) =>
-        s.y <= visibleY + this.symbolHeight &&
-        s.y + this.symbolHeight >= visibleY,
-    );
+    for (const s of this.symbolSprites) {
+      const dist = Math.abs(s.y + this.symbolHeight / 2 - centerY);
+      if (dist < minDist) {
+        closest = s;
+        minDist = dist;
+      }
+    }
 
-    return current ? current.symbolType : null;
+    return closest.symbolType;
   }
 }
