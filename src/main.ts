@@ -1,11 +1,6 @@
 import { Application, Assets } from "pixi.js";
 import { loadStartScene } from "./GameScene";
 
-// Create a new application
-const app = new Application();
-await app.init({ background: "#2b0202ff", resizeTo: window });
-document.getElementById("pixi-container")!.appendChild(app.canvas);
-
 const preload = async () => {
   const assets = [
     { alias: "balance", src: "/assets/balance.png" },
@@ -24,8 +19,12 @@ const preload = async () => {
 };
 
 // Game Loop
-(async () => {
+async () => {
+  // Create a new application
+  const app = new Application();
+  await app.init({ background: "#2b0202ff", resizeTo: window });
+  document.getElementById("pixi-container")!.appendChild(app.canvas);
   await preload();
 
   loadStartScene(app);
-})();
+};
